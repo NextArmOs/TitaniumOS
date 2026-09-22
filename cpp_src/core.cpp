@@ -4,10 +4,10 @@
 extern "C" {
     int execute_system_command(const char* command) {
         if (std::strcmp(command, "help") == 0) {
-            std::cout << "--- TerminalOS Help v0.2 ---\n";
+            std::cout << "--- TitaniumOS Help v0.02 ---\n";
             std::cout << "help    - Show this message\n";
             std::cout << "sysinfo - Display OS information\n";
-            std::cout << "exit    - Shutdown TerminalOS\n";
+            std::cout << "exit    - Shutdown TitaniumOS\n";
             return 0;
         } 
         else if (std::strcmp(command, "sysinfo") == 0) {
@@ -20,8 +20,7 @@ extern "C" {
             return 1;
         }
         
-        std::cout << "TerminalOS: command not found: " << command << "\n";
+        std::cout << "TitaniumOS: command not found: " << command << "\n";
         return -1;
     }
 }
-
