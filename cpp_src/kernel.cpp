@@ -1,26 +1,20 @@
-#include <iostream>
 #include <cstring>
 
 extern "C" {
-    int execute_system_command(const char* command) {
+    int execute_system_command(const char* command, char* output_buffer, int max_len) {
         if (std::strcmp(command, "help") == 0) {
-            std::cout << "--- TitaniumOS Help v0.02 ---\n";
-            std::cout << "help    - Show this message\n";
-            std::cout << "sysinfo - Display OS information\n";
-            std::cout << "exit    - Shutdown TitaniumOS\n";
+            std::strncpy(output_buffer, "Commands: help, sysinfo, clear", max_len);
             return 0;
         } 
         else if (std::strcmp(command, "sysinfo") == 0) {
-            std::cout << "[Kernel] Running on CachyOS Kernel Sim\n";
-            std::cout << "[Architecture] Hybrid Rust/C++ Architecture\n";
+            std::strncpy(output_buffer, "TitaniumOS v0.03\nKernel: Virtual C++ Kernel v0.03\nHost: Linux\nStatus: Operational", max_len);
             return 0;
-        } 
-        else if (std::strcmp(command, "exit") == 0) {
-            std::cout << "[Kernel] Shutting down systems... Goodbye.\n";
-            return 1;
+        }
+        else if (std::strcmp(command, "clear") == 0) {
+            return 2;
         }
         
-        std::cout << "TitaniumOS: command not found: " << command << "\n";
+        std::strncpy(output_buffer, "TitaniumOS: command not found", max_len);
         return -1;
     }
 }
