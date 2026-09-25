@@ -35,7 +35,7 @@ fn main() -> Result<(), io::Error> {
     
     let mut input_buffer = String::new();
     let mut console_history = vec![
-        String::from("Welcome to TitaniumOS Terminal!"),
+        String::from("Welcome to TitaniumOS!"),
         String::from("Type 'help' for a list of commands."),
         String::from("")
     ];
@@ -83,7 +83,7 @@ fn main() -> Result<(), io::Error> {
             let main_style = Style::default().bg(bg_color).fg(Color::White);
 
             let desktop_block = Block::default()
-                .title(" 💻 TitaniumOS Desktop v0.04 ")
+                .title(" 💻 TitaniumOS v0.04 ")
                 .borders(Borders::ALL)
                 .style(main_style);
 
@@ -97,7 +97,7 @@ fn main() -> Result<(), io::Error> {
                 }
                 1 => {
                     let mut console_lines = console_history.clone();
-                    console_lines.push(format!("guest@titanium_os:~# {}", input_buffer));
+                    console_lines.push(format!("root@titanium_os:~# {}", input_buffer));
                     let console_content = console_lines.join("\n");
                     f.render_widget(Paragraph::new(console_content).block(desktop_block), chunks[0]);
                 }
@@ -125,7 +125,7 @@ fn main() -> Result<(), io::Error> {
             }
 
             let taskbar_title = format!(" Taskbar | FPS: {} | Limit: {}Hz ", fps, if target_fps == 9999 { "None".to_string() } else { target_fps.to_string() });
-            let titles = vec!["🏠 Desktop", "📟 Console", "⚙️ Settings", "❌ Exit (Esc)"];
+            let titles = vec![" Desktop", " Console", " Settings", " Exit (Esc)"];
             
             let tabs = Tabs::new(titles)
                 .block(Block::default().title(taskbar_title).borders(Borders::ALL))
