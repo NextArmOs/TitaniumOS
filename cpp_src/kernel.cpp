@@ -7,7 +7,7 @@ extern "C" {
             return 0;
         } 
         else if (std::strcmp(command, "sysinfo") == 0) {
-            std::strncpy(output_buffer, "TitaniumOS v0.04\nKernel: Virtual C++ Kernel v0.04\nHost: Linux\nStatus: Operational", max_len);
+            std::strncpy(output_buffer, "TitaniumOS v0.06\nKernel: Virtual C++ Kernel v0.06\nHost: Linux\nStatus: Operational", max_len);
             return 0;
         }
         else if (std::strcmp(command, "clear") == 0) {
