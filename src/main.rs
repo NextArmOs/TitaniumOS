@@ -1,3 +1,8 @@
+mod apps;
+mod games;
+
+use apps::{calc::Calculator, monitor::SystemMonitor};
+use games::snake::SnakeGame;
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -40,8 +45,7 @@ fn main() -> Result<(), io::Error> {
         String::from("")
     ];
 
-        let ascii_art = r#"
-  _________________________ 
+   let ascii_art = r#"
   _______   _
  |__   __| |-|         / __ \ / ____|
     | |    |_|         | |  | | (___  
@@ -53,12 +57,16 @@ fn main() -> Result<(), io::Error> {
     
     
     
-      "#;
+    "#;
 
     let mut fps = 0;
     let mut frame_count = 0;
     let mut last_fps_update = Instant::now();
     let mut target_fps: u32 = 60;
+
+    let mut snake_game = SnakeGame::new();
+    let mut calculator = Calculator::new();
+    let mut sys_monitor = SystemMonitor::new();
 
     loop {
         let frame_start = Instant::now();
@@ -83,14 +91,14 @@ fn main() -> Result<(), io::Error> {
             let main_style = Style::default().bg(bg_color).fg(Color::White);
 
             let desktop_block = Block::default()
-                .title(" 💻 TitaniumOS v0.04 ")
+                .title(" 💻 TitaniumOS v0.06 ")
                 .borders(Borders::ALL)
                 .style(main_style);
 
             match current_tab {
                 0 => {
                     let content = format!(
-                        "{}\n\n 📁 Documents   🎮 Games\n\n Welcome to your desktop!\n Use Left/Right arrows or click the Taskbar to navigate.",
+                        "{}\n\n 📁 Documents   🎮 Games   🧮 Calculator   📊 Monitor\n\n Welcome to your desktop!\n Use click on the Taskbar to navigate.",
                         ascii_art
                     );
                     f.render_widget(Paragraph::new(content).block(desktop_block), chunks[0]);
@@ -102,6 +110,15 @@ fn main() -> Result<(), io::Error> {
                     f.render_widget(Paragraph::new(console_content).block(desktop_block), chunks[0]);
                 }
                 2 => {
+                    snake_game.draw(f, chunks[0]);
+                }
+                3 => {
+                    calculator.draw(f, chunks[0]);
+                }
+                4 => {
+                    sys_monitor.draw(f, chunks[0]);
+                }
+                5 => {
                     let hz_status = if target_fps == 9999 { String::from("UNLIMITED") } else { format!("{} Hz", target_fps) };
                     let content = format!(
                         " 🛠️ Settings Menu\n\n \
@@ -110,7 +127,7 @@ fn main() -> Result<(), io::Error> {
                          2 -> Classic Black\n \
                          3 -> Slate Gray\n\n \
                          [Frame Rate Limiter / Display Hz] Press:\n \
-                         4 -> Set to 30 Hz (Power Save)\n \
+                         4 -> Set to 30 Hz (Power Save / Snake Mode)\n \
                          5 -> Set to 60 Hz (Standard)\n \
                          6 -> Set to 144 Hz (Gaming)\n \
                          7 -> Uncapped (Max Performance)\n\n \
@@ -125,7 +142,7 @@ fn main() -> Result<(), io::Error> {
             }
 
             let taskbar_title = format!(" Taskbar | FPS: {} | Limit: {}Hz ", fps, if target_fps == 9999 { "None".to_string() } else { target_fps.to_string() });
-            let titles = vec![" Desktop", " Console", " Settings", " Exit (Esc)"];
+            let titles = vec!["🏠 Desktop", "📟 Console", "🎮 Games", "🧮 Calc", "📊 Monitor", "⚙️ Settings", "❌ Exit (Esc)"];
             
             let tabs = Tabs::new(titles)
                 .block(Block::default().title(taskbar_title).borders(Borders::ALL))
@@ -136,12 +153,12 @@ fn main() -> Result<(), io::Error> {
 
             let start_x = chunks[1].x + 2; 
             let y = chunks[1].y + 1;
-            let tab_widths = vec![12, 12, 13, 13]; 
+            let tab_widths = vec![11, 11, 10, 8, 11, 12, 12]; 
             let mut current_x = start_x;
             
             for width in tab_widths {
                 taskbar_areas.push((current_x, current_x + width, y));
-                current_x += width + 1; 
+                current_x += width + 2; 
             }
         })?;
 
@@ -150,19 +167,19 @@ fn main() -> Result<(), io::Error> {
                 Event::Key(key) => {
                     match key.code {
                         KeyCode::Esc => break,
-                        KeyCode::Right => {
-                            current_tab = (current_tab + 1) % 4;
-                            if current_tab == 3 { break; }
+                        KeyCode::Right if current_tab != 1 && current_tab != 2 && current_tab != 3 => {
+                            current_tab = (current_tab + 1) % 7;
+                            if current_tab == 6 { break; }
                         }
-                        KeyCode::Left => {
-                            if current_tab > 0 { current_tab -= 1; } else { current_tab = 2; }
+                        KeyCode::Left if current_tab != 1 && current_tab != 2 && current_tab != 3 => {
+                            if current_tab > 0 { current_tab -= 1; } else { current_tab = 5; }
                         }
                         _ => {
                             if current_tab == 1 {
                                 match key.code {
                                     KeyCode::Enter => {
                                         if !input_buffer.trim().is_empty() {
-                                            console_history.push(format!("guest@titanium_os:~# {}", input_buffer));
+                                            console_history.push(format!("root@titanium_os:~# {}", input_buffer));
                                             let c_command = CString::new(input_buffer.trim()).unwrap();
                                             let mut buffer = vec![0u8; 256];
                                             unsafe {
@@ -194,6 +211,10 @@ fn main() -> Result<(), io::Error> {
                                     _ => {}
                                 }
                             } else if current_tab == 2 {
+                                snake_game.handle_input(key.code);
+                            } else if current_tab == 3 {
+                                calculator.handle_input(key.code);
+                            } else if current_tab == 5 {
                                 match key.code {
                                     KeyCode::Char('1') => bg_color = Color::Blue,
                                     KeyCode::Char('2') => bg_color = Color::Black,
@@ -201,7 +222,7 @@ fn main() -> Result<(), io::Error> {
                                     KeyCode::Char('4') => target_fps = 30,
                                     KeyCode::Char('5') => target_fps = 60,
                                     KeyCode::Char('6') => target_fps = 144,
-                                    KeyCode::Char('7') => target_fps = 9999,
+                                         KeyCode::Char('7') => target_fps = 9999,
                                     _ => {}
                                 }
                             }
@@ -212,7 +233,7 @@ fn main() -> Result<(), io::Error> {
                     if mouse_event.kind == MouseEventKind::Down(MouseButton::Left) {
                         for (index, &(start_x, end_x, y)) in taskbar_areas.iter().enumerate() {
                             if mouse_event.row == y && mouse_event.column >= start_x && mouse_event.column < end_x {
-                                if index == 3 {
+                                if index == 6 {
                                     disable_raw_mode()?;
                                     execute!(terminal.backend_mut(), LeaveAlternateScreen, crossterm::event::DisableMouseCapture)?;
                                     return Ok(());
@@ -222,17 +243,33 @@ fn main() -> Result<(), io::Error> {
                         }
                     }
                 }
-                _ => {}}}if target_fps != 9999 {
-                    let target_frame_time = Duration::from_secs_f64(1.0 / target_fps as f64);
-                    let elapsed = frame_start.elapsed();
-                    if elapsed < target_frame_time {std::thread::sleep(target_frame_time - elapsed);
-                    }
-                }
+                _ => {}
             }
-            disable_raw_mode()?;
-            execute!
-            (terminal.backend_mut(),
-            LeaveAlternateScreen,
-            crossterm::event::DisableMouseCapture)?;
-            terminal.show_cursor()?;Ok(())
         }
+
+        if current_tab == 2 {
+            snake_game.update();
+        }
+        
+        if current_tab == 4 {
+            sys_monitor.update();
+        }
+
+        if target_fps != 9999 {
+            let target_frame_time = Duration::from_secs_f64(1.0 / target_fps as f64);
+            let elapsed = frame_start.elapsed();
+            if elapsed < target_frame_time {
+                std::thread::sleep(target_frame_time - elapsed);
+            }
+        }
+    }
+
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(), 
+        LeaveAlternateScreen, 
+        crossterm::event::DisableMouseCapture
+    )?;
+    terminal.show_cursor()?;
+    Ok(())
+}
